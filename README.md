@@ -1,4 +1,4 @@
-[![Run Pre-Commit](https://github.com/andresb39/aws_sso_permission_set/actions/workflows/pre-commit.yaml/badge.svg?branch=main)](https://github.com/andresb39/aws_sso_permission_set/actions/workflows/pre-commit.yaml)
+[![Run Pre-Commit](https://github.com/andresb39/terraform-aws-sso-permissions-set/actions/workflows/pre-commit.yaml/badge.svg?branch=main)](https://github.com/andresb39/terraform-aws-sso-permissions-set/actions/workflows/pre-commit.yaml)
 # Amazon SSO Permission set
 
 This module create identity groups and attachment policies inlines/managed and associated this groups with the accounts
@@ -54,3 +54,87 @@ No modules.
 |------|-------------|
 | <a name="output_group_id"></a> [group\_id](#output\_group\_id) | Group ID |
 <!-- END_TF_DOCS -->
+
+## Examples
+
+### Terraform
+
+**main.tf**
+```
+data "aws_iam_policy_document" "example" {
+  statement {
+    sid = "1"
+
+    actions = [
+      "s3:ListAllMyBuckets",
+      "s3:GetBucketLocation",
+    ]
+
+    resources = [
+      "arn:aws:s3:::*",
+    ]
+  }
+}
+
+module "sso" {
+  source = "git@github.com:andresb39/terraform-aws-sso-permissions-set.git?ref=v0.0.1"
+  group_name           = "Mytest"
+  description          = "My test Team"
+  inline_policy        = data.aws_iam_policy_document.example.json
+  display_name         = "Mytest"
+  description_identity = "Mytest"
+  target_id            = ["11111111111"]
+  tags = {
+    "Environment": "Test Environment"
+    }
+  }
+
+```
+
+### Terragrum
+
+**terragrum.hcl**
+```
+include {
+  path = find_in_parent_folders()
+}
+
+terraform {
+  source = "git@github.com:andresb39/terraform-aws-sso-permissions-set.git?ref=v0.0.1"
+}
+
+locals {
+  policy   = jsondecode(file("policy.json"))
+
+}
+
+inputs = {
+  group_name           = "Mytest"
+  description          = "My test Team"
+  inline_policy        = local.policy
+  display_name         = "Mytest"
+  description_identity = "Mytest"
+  target_id            = ["11111111111"]
+  tags = {
+    "Environment": "Test Environment"
+    }
+}
+```
+
+**policy.json**
+```
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "VisualEditor0",
+      "Effect": "Allow",
+      "Action": [
+        "s3:Get*",
+        "s3:List*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
